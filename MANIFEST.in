@@ -1,0 +1,5 @@
+global-include CMakeLists.txt *.c *.cpp *.h *.hpp
+graft cmake
+prune tests
+prune build
+prune .tox
