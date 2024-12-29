@@ -1,4 +1,4 @@
-global-include CMakeLists.txt *.c *.cpp *.h *.hpp
+global-include CMakeLists.txt *.c *.cpp *.h *.hpp *.cmake
 graft cmake
 prune tests
 prune build

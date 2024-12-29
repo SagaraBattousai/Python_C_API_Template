@@ -1,43 +1,55 @@
-cmake_minimum_required(VERSION 3.15)
+cmake_minimum_required(VERSION 3.29)
 
-project(Project_Name
+project(<Project_Name>
         VERSION 0.0.1
         DESCRIPTION ""
         LANGUAGES C CXX)
 
-include(cmake/inplace_build.cmake)
-
-# Add Interpreter if needed and remove NumPy if not used but as it is so
-# common it is left by default.
-find_package(Python3 COMPONENTS Development NumPy REQUIRED) 
-
-message(DEBUG ${Python3_NumPy_VERSION})
-
-set(BUILD_PYTHON_EXTENSIONS ON CACHE BOOL 
-"Whether to build Python C Extension Libraries and set the appropriate \
-extension") 
-
-set(PYTHON_EXTENSION_DOC_STRING
-"Do not manually change this variable unless you are sure you need/want to. \
-Using setup.py with CMake_Extensions will set this automatically and running \
-CMake with variables left as default will set the correct extension for \
-libraries without the python version information that setup.py includes.")
-
-if (BUILD_PYTHON_EXTENSIONS AND (NOT PYTHON_EXTENSION))
-  if (${WIN32})
-    set(PYTHON_EXTENSION ".pyd" CACHE STRING ${PYTHON_EXTENSION_DOC_STRING})
-  else()
-    set(PYTHON_EXTENSION ".so"  CACHE STRING ${PYTHON_EXTENSION_DOC_STRING})
+# Leave C++ standard up to the root application, so set it only if this is the
+# current top-level CMake project.
+if(CMAKE_SOURCE_DIR STREQUAL <Project_Name>_SOURCE_DIR)
+  set(CMAKE_CXX_STANDARD 20)
+  set(CMAKE_CXX_STANDARD_REQUIRED ON)
+  set(CMAKE_C_STANDARD 11)
+  set(CMAKE_C_STANDARD_REQUIRED ON)
+else()
+  if(CMAKE_CXX_STANDARD LESS 20)
+    message(FATAL_ERROR
+      "<Project_Name> requires CMAKE_CXX_STANDARD >= 20 (got: ${CMAKE_CXX_STANDARD})")
+  endif()
+  if(CMAKE_C_STANDARD LESS 11)
+    message(FATAL_ERROR
+      "<Project_Name> requires CMAKE_C_STANDARD >= 11 (got: ${CMAKE_C_STANDARD})")
   endif()
 endif()
 
-# TODO: Decide whether to keep tis or if its only for developers not users
-set(BUILD_EXTENSIONS_INPLACE OFF CACHE BOOL 
-  "Whether to copy the built Python C Extension Libraries to the source \
-directory the module expects if running as uninstalled package \
-(useful for running tests on CI etc and to not require pip install \
-for tasks such as running tests etc)")
+set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
-# TODO: decide src structure, may be easier/more repeatable to keep outside
-# python dir
-add_subdirectory("project_name/core")
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${PROJECT_SOURCE_DIR}/cmake")
+
+include(PythonUtils)
+include(DocsUtils)
+
+if (MSVC)
+  # 4100 must be ignored as PyObject *self may be unreferenced
+  add_compile_options(/permissive /WX /W4 /wd4100) # /wd4251)
+else()
+  add_compile_options(-Wall -Wextra -pedantic -Werror -Wno-unknown-pragmas)
+endif()
+
+set(<Project_Name>_BUILD_DOCS OFF CACHE BOOL "Whether or not to build documentation.")
+set(<Project_Name>_BUILD_TESTS OFF CACHE BOOL "Whether or not to build tests.")
+
+set(MODULE_ROOT "${PROJECT_SOURCE_DIR}/include")
+
+add_subdirectory(<Project_Name>)
+
+if(<Project_Name>_BUILD_TESTS)
+  enable_testing()
+  add_subdirectory(tests)
+endif()
+
+if(<Project_Name>_BUILD_DOCS)
+  add_subdirectory(docs)
+endif()
+
