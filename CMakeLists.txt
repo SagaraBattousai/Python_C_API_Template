@@ -42,7 +42,7 @@ set(<Project_Name>_BUILD_TESTS OFF CACHE BOOL "Whether or not to build tests.")
 
 set(MODULE_ROOT "${PROJECT_SOURCE_DIR}/include")
 
-add_subdirectory(<Project_Name>)
+add_subdirectory(src/<Project_Name>)
 
 if(<Project_Name>_BUILD_TESTS)
   enable_testing()
